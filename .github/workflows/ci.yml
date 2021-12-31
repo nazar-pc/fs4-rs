@@ -70,7 +70,7 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: test fmmap all features
-        run: cargo test --all-features 
+        run: cargo test --features sync,tokio-async,std-async,smol-async
 
   tarpaulin:
     name: cargo tarpaulin
@@ -95,7 +95,7 @@ jobs:
 
       - uses: actions-rs/tarpaulin@v0.1
       - name: Run cargo tarpaulin
-        run: cargo tarpaulin --all-features --workspace --run-types Tests,Doctests --out Xml
+        run: cargo tarpaulin --features sync,tokio-async,std-async,smol-async --workspace --run-types Tests,Doctests --out Xml
 
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v1.0.2
