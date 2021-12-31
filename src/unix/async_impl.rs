@@ -6,7 +6,7 @@ macro_rules! allocate {
         target_os = "emscripten",
         target_os = "nacl"))]
         pub async fn allocate(file: &$file, len: u64) -> std::io::Result<()> {
-            let ret = unsafe { libc::posix_fallocate(file.as_raw_fd(), 0, len as libc::off_t) };
+            let ret = unsafe { libc::fallocate(file.as_raw_fd(), 0, 0, len as libc::off_t) };
             if ret == 0 { Ok(()) } else { Err(std::io::Error::last_os_error()) }
         }
 
