@@ -65,7 +65,7 @@ mod test {
     use std::fs;
     use std::os::windows::io::AsRawHandle;
 
-    use crate::{lock_contended_error, FileExt, FsStats};
+    use crate::{lock_contended_error, FileExt};
     
     /// The duplicate method returns a file with a new file handle.
     #[test]
