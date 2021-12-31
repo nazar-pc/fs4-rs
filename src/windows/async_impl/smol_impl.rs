@@ -27,7 +27,7 @@ mod test {
     use smol::fs;
     use std::os::windows::io::AsRawHandle;
 
-    use crate::{lock_contended_error, smol::AsyncFileExt, FsStats};
+    use crate::{lock_contended_error, smol::AsyncFileExt};
 
     /// The duplicate method returns a file with a new file handle.
     #[smol_potat::test]

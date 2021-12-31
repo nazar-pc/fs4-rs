@@ -28,7 +28,7 @@ mod test {
     use async_std::fs;
     use std::os::windows::io::AsRawHandle;
 
-    use crate::{lock_contended_error, async_std::AsyncFileExt, FsStats};
+    use crate::{lock_contended_error, async_std::AsyncFileExt};
 
     /// The duplicate method returns a file with a new file handle.
     #[async_std::test]
