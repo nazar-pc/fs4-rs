@@ -1,11 +1,11 @@
 [package]
 name = "fs4"
 # NB: When modifying, also modify html_root_url in lib.rs
-version = "0.5.0"
+version = "0.5.1"
 authors = ["Dan Burkert <dan@danburkert.com>", "Al Liu <scygliu1@gmail.com>"]
 license = "MIT/Apache-2.0"
-repository = "https://github.com/al8n/fs3-rs"
-documentation = "https://docs.rs/fs3"
+repository = "https://github.com/al8n/fs4-rs"
+documentation = "https://docs.rs/fs4"
 description = "Cross-platform file locks and file duplication. Original fs2, now supports async."
 keywords = ["file", "file-system", "lock", "duplicate", "flock"]
 edition = "2021"
