@@ -27,9 +27,9 @@ This is a fork of the [fs2-rs](https://github.com/danburkert/fs2-rs) crate, the 
 - [x] file (pre)allocation.
 - [x] file allocation information.
 - [x] filesystem space usage information.
-- [ ] [tokio support](https://crates.io/crates/tokio)
-- [ ] [smol support](https://crates.io/crates/smol)
-- [ ] [async-std support](https://crates.io/crates/async-std)
+- [x] [tokio support](https://crates.io/crates/tokio)
+- [x] [smol support](https://crates.io/crates/smol)
+- [x] [async-std support](https://crates.io/crates/async-std)
 
 ## License
 
