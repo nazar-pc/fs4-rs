@@ -62,6 +62,7 @@ pub(crate) mod sync_impl;
 pub(crate) mod async_impl;
 
 use std::io::{Error, Result};
+use std::os::windows::ffi::OsStrExt;
 use std::path::Path;
 use winapi::shared::winerror::ERROR_LOCK_VIOLATION;
 use winapi::shared::minwindef::DWORD;

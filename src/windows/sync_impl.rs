@@ -1,22 +1,18 @@
 use std::fs::File;
 use std::io::{Error, Result};
 use std::mem;
-use std::os::windows::ffi::OsStrExt;
 use std::os::windows::io::{AsRawHandle, FromRawHandle};
-use std::path::Path;
 use std::ptr;
 
 use winapi::shared::minwindef::{BOOL, DWORD};
-use winapi::um::fileapi::{FILE_ALLOCATION_INFO, FILE_STANDARD_INFO, GetDiskFreeSpaceW};
-use winapi::um::fileapi::{GetVolumePathNameW, LockFileEx, UnlockFile, SetFileInformationByHandle};
+use winapi::um::fileapi::{FILE_ALLOCATION_INFO, FILE_STANDARD_INFO};
+use winapi::um::fileapi::{LockFileEx, UnlockFile, SetFileInformationByHandle};
 use winapi::um::handleapi::DuplicateHandle;
 use winapi::um::minwinbase::{FileAllocationInfo, FileStandardInfo};
 use winapi::um::minwinbase::{LOCKFILE_FAIL_IMMEDIATELY, LOCKFILE_EXCLUSIVE_LOCK};
 use winapi::um::processthreadsapi::GetCurrentProcess;
 use winapi::um::winbase::GetFileInformationByHandleEx;
 use winapi::um::winnt::DUPLICATE_SAME_ACCESS;
-
-use crate::FsStats;
 
 duplicate!(File);
 lock_impl!(File);

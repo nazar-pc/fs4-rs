@@ -1,6 +1,8 @@
 //! Extended utilities for working with files and filesystems in Rust.
 #![doc(html_root_url = "https://docs.rs/fs4/0.5.0")]
 #![cfg_attr(test, feature(test))]
+#![cfg_attr(docsrs, feature(doc_cfg))]
+#![cfg_attr(docsrs, allow(unused_attributes))]
 #[cfg(unix)]
 extern crate libc;
 
@@ -10,7 +12,7 @@ extern crate winapi;
 macro_rules! cfg_async_std {
     ($($item:item)*) => {
         $(
-            #[cfg(feature = "async-std")]
+            #[cfg(feature = "std-async")]
             #[cfg_attr(docsrs, doc(cfg(feature = "async-std")))]
             $item
         )*
@@ -20,7 +22,7 @@ macro_rules! cfg_async_std {
 macro_rules! cfg_smol {
     ($($item:item)*) => {
         $(
-            #[cfg(feature = "smol")]
+            #[cfg(feature = "smol-async")]
             #[cfg_attr(docsrs, doc(cfg(feature = "smol")))]
             $item
         )*
@@ -30,7 +32,7 @@ macro_rules! cfg_smol {
 macro_rules! cfg_tokio {
     ($($item:item)*) => {
         $(
-            #[cfg(feature = "tokio")]
+            #[cfg(feature = "tokio-async")]
             #[cfg_attr(docsrs, doc(cfg(feature = "tokio")))]
             $item
         )*

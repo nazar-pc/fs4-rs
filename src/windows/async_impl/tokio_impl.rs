@@ -1,13 +1,11 @@
 use std::io::{Error, Result};
 use std::mem;
-use std::os::windows::ffi::OsStrExt;
 use std::os::windows::io::{AsRawHandle, FromRawHandle};
-use std::path::Path;
 use std::ptr;
 
 use winapi::shared::minwindef::{BOOL, DWORD};
-use winapi::um::fileapi::{FILE_ALLOCATION_INFO, FILE_STANDARD_INFO, GetDiskFreeSpaceW};
-use winapi::um::fileapi::{GetVolumePathNameW, LockFileEx, UnlockFile, SetFileInformationByHandle};
+use winapi::um::fileapi::{FILE_ALLOCATION_INFO, FILE_STANDARD_INFO};
+use winapi::um::fileapi::{LockFileEx, UnlockFile, SetFileInformationByHandle};
 use winapi::um::handleapi::DuplicateHandle;
 use winapi::um::minwinbase::{FileAllocationInfo, FileStandardInfo};
 use winapi::um::minwinbase::{LOCKFILE_FAIL_IMMEDIATELY, LOCKFILE_EXCLUSIVE_LOCK};
