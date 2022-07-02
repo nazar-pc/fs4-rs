@@ -1,20 +1,15 @@
 use std::fs::File;
 use std::io::{Error, Result};
 use std::mem;
-use std::os::windows::io::{AsRawHandle, FromRawHandle};
-use std::ptr;
+use std::os::windows::io::AsRawHandle;
 
-use winapi::shared::minwindef::{BOOL, DWORD};
+use winapi::shared::minwindef::DWORD;
 use winapi::um::fileapi::{LockFileEx, SetFileInformationByHandle, UnlockFile};
 use winapi::um::fileapi::{FILE_ALLOCATION_INFO, FILE_STANDARD_INFO};
-use winapi::um::handleapi::DuplicateHandle;
 use winapi::um::minwinbase::{FileAllocationInfo, FileStandardInfo};
 use winapi::um::minwinbase::{LOCKFILE_EXCLUSIVE_LOCK, LOCKFILE_FAIL_IMMEDIATELY};
-use winapi::um::processthreadsapi::GetCurrentProcess;
 use winapi::um::winbase::GetFileInformationByHandleEx;
-use winapi::um::winnt::DUPLICATE_SAME_ACCESS;
 
-duplicate!(File);
 lock_impl!(File);
 
 pub fn allocated_size(file: &File) -> Result<u64> {
@@ -68,45 +63,6 @@ mod test {
     use std::os::windows::io::AsRawHandle;
 
     use crate::{lock_contended_error, FileExt};
-
-    /// The duplicate method returns a file with a new file handle.
-    #[test]
-    fn duplicate_new_handle() {
-        let tempdir = tempdir::TempDir::new("fs4").unwrap();
-        let path = tempdir.path().join("fs4");
-        let file1 = fs::OpenOptions::new()
-            .write(true)
-            .create(true)
-            .open(&path)
-            .unwrap();
-        let file2 = file1.duplicate().unwrap();
-        assert!(file1.as_raw_handle() != file2.as_raw_handle());
-    }
-
-    /// A duplicated file handle does not have access to the original handle's locks.
-    #[test]
-    fn lock_duplicate_handle_independence() {
-        let tempdir = tempdir::TempDir::new("fs4").unwrap();
-        let path = tempdir.path().join("fs4");
-        let file1 = fs::OpenOptions::new()
-            .read(true)
-            .write(true)
-            .create(true)
-            .open(&path)
-            .unwrap();
-        let file2 = file1.duplicate().unwrap();
-
-        // Locking the original file handle will block the duplicate file handle from opening a lock.
-        file1.lock_shared().unwrap();
-        assert_eq!(
-            file2.try_lock_exclusive().unwrap_err().raw_os_error(),
-            lock_contended_error().raw_os_error()
-        );
-
-        // Once the original file handle is unlocked, the duplicate handle can proceed with a lock.
-        file1.unlock().unwrap();
-        file2.lock_exclusive().unwrap();
-    }
 
     /// A file handle may not be exclusively locked multiple times, or exclusively locked and then
     /// shared locked.
@@ -205,30 +161,5 @@ mod test {
 
         drop(file1);
         file2.lock_exclusive().unwrap();
-    }
-
-    /// A file handle's locks will not be released until the original handle and all of its
-    /// duplicates have been closed. This on really smells like a bug in Windows.
-    #[test]
-    fn lock_duplicate_cleanup() {
-        let tempdir = tempdir::TempDir::new("fs4").unwrap();
-        let path = tempdir.path().join("fs4");
-        let file1 = fs::OpenOptions::new()
-            .read(true)
-            .write(true)
-            .create(true)
-            .open(&path)
-            .unwrap();
-        let file2 = file1.duplicate().unwrap();
-
-        // Open a lock on the original handle, then close it.
-        file1.lock_shared().unwrap();
-        drop(file1);
-
-        // Attempting to create a lock on the file with the duplicate handle will fail.
-        assert_eq!(
-            file2.try_lock_exclusive().unwrap_err().raw_os_error(),
-            lock_contended_error().raw_os_error()
-        );
     }
 }

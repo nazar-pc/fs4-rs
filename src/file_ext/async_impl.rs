@@ -30,20 +30,6 @@ macro_rules! async_file_ext {
         /// on Windows.
         #[async_trait::async_trait]
         pub trait AsyncFileExt {
-            /// Returns a duplicate instance of the file.
-            ///
-            /// The returned file will share the same file position as the original
-            /// file.
-            ///
-            /// If using rustc version 1.9 or later, prefer using `File::try_clone` to this.
-            ///
-            /// # Notes
-            ///
-            /// This is implemented with
-            /// [`dup(2)`](http://man7.org/linux/man-pages/man2/dup.2.html) on Unix and
-            /// [`DuplicateHandle`](https://msdn.microsoft.com/en-us/library/windows/desktop/ms724251(v=vs.85).aspx)
-            /// on Windows.
-            fn duplicate(&self) -> Result<$file>;
 
             /// Returns the amount of physical space allocated for a file.
             async fn allocated_size(&self) -> Result<u64>;
@@ -76,9 +62,6 @@ macro_rules! async_file_ext {
 
         #[async_trait::async_trait]
         impl AsyncFileExt for $file {
-            fn duplicate(&self) -> Result<$file> {
-                sys::duplicate(self)
-            }
             async fn allocated_size(&self) -> Result<u64> {
                 sys::allocated_size(self).await
             }

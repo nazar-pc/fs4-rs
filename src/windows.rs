@@ -1,28 +1,3 @@
-macro_rules! duplicate {
-    ($file: ty) => {
-        pub fn duplicate(file: &$file) -> Result<File> {
-            unsafe {
-                let mut handle = ptr::null_mut();
-                let current_process = GetCurrentProcess();
-                let ret = DuplicateHandle(
-                    current_process,
-                    file.as_raw_handle(),
-                    current_process,
-                    &mut handle,
-                    0,
-                    true as BOOL,
-                    DUPLICATE_SAME_ACCESS,
-                );
-                if ret == 0 {
-                    Err(Error::last_os_error())
-                } else {
-                    Ok(<$file>::from_raw_handle(handle))
-                }
-            }
-        }
-    };
-}
-
 macro_rules! lock_impl {
     ($file: ty) => {
         pub fn lock_shared(file: &$file) -> Result<()> {

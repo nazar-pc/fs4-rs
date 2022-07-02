@@ -1,86 +1,37 @@
-macro_rules! duplicate {
-    ($file: ty) => {
-        pub fn duplicate(file: &$file) -> std::io::Result<$file> {
-            unsafe {
-                let fd = libc::dup(file.as_raw_fd());
-
-                if fd < 0 {
-                    Err(std::io::Error::last_os_error())
-                } else {
-                    Ok(<$file>::from_raw_fd(fd))
-                }
-            }
-        }
-    };
-}
-
 macro_rules! lock_impl {
     ($file: ty) => {
+        #[cfg(not(target_os = "wasi"))]
         pub fn lock_shared(file: &$file) -> std::io::Result<()> {
-            flock(file, libc::LOCK_SH)
+            flock(file, rustix::fs::FlockOperation::LockShared)
         }
 
+        #[cfg(not(target_os = "wasi"))]
         pub fn lock_exclusive(file: &$file) -> std::io::Result<()> {
-            flock(file, libc::LOCK_EX)
+            flock(file, rustix::fs::FlockOperation::LockExclusive)
         }
 
+        #[cfg(not(target_os = "wasi"))]
         pub fn try_lock_shared(file: &$file) -> std::io::Result<()> {
-            flock(file, libc::LOCK_SH | libc::LOCK_NB)
+            flock(file, rustix::fs::FlockOperation::NonBlockingLockShared)
         }
 
+        #[cfg(not(target_os = "wasi"))]
         pub fn try_lock_exclusive(file: &$file) -> std::io::Result<()> {
-            flock(file, libc::LOCK_EX | libc::LOCK_NB)
+            flock(file, rustix::fs::FlockOperation::NonBlockingLockExclusive)
         }
 
+        #[cfg(not(target_os = "wasi"))]
         pub fn unlock(file: &$file) -> std::io::Result<()> {
-            flock(file, libc::LOCK_UN)
+            flock(file, rustix::fs::FlockOperation::Unlock)
         }
 
-        /// Simulate flock() using fcntl(); primarily for Oracle Solaris.
-        #[cfg(target_os = "solaris")]
-        fn flock(file: &$file, flag: libc::c_int) -> std::io::Result<()> {
-            let mut fl = libc::flock {
-                l_whence: 0,
-                l_start: 0,
-                l_len: 0,
-                l_type: 0,
-                l_pad: [0; 4],
-                l_pid: 0,
-                l_sysid: 0,
-            };
+        #[cfg(not(target_os = "wasi"))]
+        fn flock(file: &$file, flag: rustix::fs::FlockOperation) -> std::io::Result<()> {
+            let borrowed_fd = unsafe { rustix::fd::BorrowedFd::borrow_raw(file.as_raw_fd()) };
 
-            // In non-blocking mode, use F_SETLK for cmd, F_SETLKW otherwise, and don't forget to clear
-            // LOCK_NB.
-            let (cmd, operation) = match flag & libc::LOCK_NB {
-                0 => (libc::F_SETLKW, flag),
-                _ => (libc::F_SETLK, flag & !libc::LOCK_NB),
-            };
-
-            match operation {
-                libc::LOCK_SH => fl.l_type |= libc::F_RDLCK,
-                libc::LOCK_EX => fl.l_type |= libc::F_WRLCK,
-                libc::LOCK_UN => fl.l_type |= libc::F_UNLCK,
-                _ => return Err(Error::from_raw_os_error(libc::EINVAL)),
-            }
-
-            let ret = unsafe { libc::fcntl(file.as_raw_fd(), cmd, &fl) };
-            match ret {
-                // Translate EACCES to EWOULDBLOCK
-                -1 => match std::io::Error::last_os_error().raw_os_error() {
-                    Some(libc::EACCES) => return Err(lock_error()),
-                    _ => return Err(std::io::Error::last_os_error()),
-                },
-                _ => Ok(()),
-            }
-        }
-
-        #[cfg(not(target_os = "solaris"))]
-        fn flock(file: &$file, flag: libc::c_int) -> std::io::Result<()> {
-            let ret = unsafe { libc::flock(file.as_raw_fd(), flag) };
-            if ret < 0 {
-                Err(std::io::Error::last_os_error())
-            } else {
-                Ok(())
+            match rustix::fs::flock(borrowed_fd, flag) {
+                Ok(_) => Ok(()),
+                Err(e) => Err(std::io::Error::from_raw_os_error(e.raw_os_error())),
             }
         }
     };
@@ -92,22 +43,25 @@ pub(crate) mod async_impl;
 pub(crate) mod sync_impl;
 
 use crate::FsStats;
-use std::ffi::CString;
-use std::io::{Error, ErrorKind, Result};
-use std::mem;
-use std::os::unix::ffi::OsStrExt;
+
+use std::io::{Error, Result};
 use std::path::Path;
 
 pub fn lock_error() -> Error {
-    Error::from_raw_os_error(libc::EWOULDBLOCK)
+    Error::from_raw_os_error(rustix::io::Errno::WOULDBLOCK.raw_os_error())
 }
 
-pub fn statvfs(path: &Path) -> Result<FsStats> {
-    let cstr = match CString::new(path.as_os_str().as_bytes()) {
+#[cfg(any(target_os = "macos", target_os = "ios"))]
+pub fn statvfs(path: impl AsRef<Path>) -> Result<FsStats> {
+    use std::ffi::CString;
+    use std::io::ErrorKind;
+    use std::mem;
+    use std::os::unix::ffi::OsStrExt;
+
+    let cstr = match CString::new(path.as_ref().as_os_str().as_bytes()) {
         Ok(cstr) => cstr,
         Err(..) => return Err(Error::new(ErrorKind::InvalidInput, "path contained a null")),
     };
-
     unsafe {
         let mut stat: libc::statvfs = mem::zeroed();
         // danburkert/fs2-rs#1: cast is necessary for platforms where c_char != u8.
@@ -121,5 +75,18 @@ pub fn statvfs(path: &Path) -> Result<FsStats> {
                 allocation_granularity: stat.f_frsize as u64,
             })
         }
+    }
+}
+
+#[cfg(not(any(target_os = "macos", target_os = "ios")))]
+pub fn statvfs(path: impl AsRef<Path>) -> Result<FsStats> {
+    match rustix::fs::statfs(path.as_ref()) {
+        Ok(stat) => Ok(FsStats {
+            free_space: stat.f_frsize as u64 * stat.f_bfree as u64,
+            available_space: stat.f_frsize as u64 * stat.f_bavail as u64,
+            total_space: stat.f_frsize as u64 * stat.f_blocks as u64,
+            allocation_granularity: stat.f_frsize as u64,
+        }),
+        Err(e) => Err(std::io::Error::from_raw_os_error(e.raw_os_error())),
     }
 }

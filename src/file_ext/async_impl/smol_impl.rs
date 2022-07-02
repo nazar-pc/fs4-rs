@@ -13,33 +13,7 @@ mod test {
     extern crate test;
 
     use smol::fs;
-    use smol::io::{SeekFrom, AsyncWriteExt, AsyncReadExt, AsyncSeekExt};
     use crate::{allocation_granularity, available_space, smol::AsyncFileExt, free_space, lock_contended_error, total_space};
-
-    /// Tests file duplication.
-    #[smol_potat::test]
-    async fn duplicate() {
-        let tempdir = tempdir::TempDir::new("fs4").unwrap();
-        let path = tempdir.path().join("fs4");
-        let mut file1 =
-            fs::OpenOptions::new().read(true).write(true).create(true).open(&path).await.unwrap();
-        let mut file2 = file1.duplicate().unwrap();
-
-        // Write into the first file and then drop it.
-        file1.write_all(b"foo").await.unwrap();
-        drop(file1);
-
-        let mut buf = vec![];
-
-        // Read from the second file; since the position is shared it will already be at EOF.
-        file2.read_to_end(&mut buf).await.unwrap();
-        assert_eq!(0, buf.len());
-
-        // Rewind and read.
-        file2.seek(SeekFrom::Start(0)).await.unwrap();
-        file2.read_to_end(&mut buf).await.unwrap();
-        assert_eq!(&buf, &b"foo");
-    }
 
     /// Tests shared file lock operations.
     #[smol_potat::test]

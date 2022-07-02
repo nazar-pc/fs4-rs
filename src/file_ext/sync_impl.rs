@@ -31,22 +31,7 @@ use crate::windows::sync_impl as sys;
 /// [`flock(2)`](http://man7.org/linux/man-pages/man2/flock.2.html) on Unix and
 /// [`LockFile`](https://msdn.microsoft.com/en-us/library/windows/desktop/aa365202(v=vs.85).aspx)
 /// on Windows.
-pub trait FileExt {
-
-    /// Returns a duplicate instance of the file.
-    ///
-    /// The returned file will share the same file position as the original
-    /// file.
-    ///
-    /// If using rustc version 1.9 or later, prefer using `File::try_clone` to this.
-    ///
-    /// # Notes
-    ///
-    /// This is implemented with
-    /// [`dup(2)`](http://man7.org/linux/man-pages/man2/dup.2.html) on Unix and
-    /// [`DuplicateHandle`](https://msdn.microsoft.com/en-us/library/windows/desktop/ms724251(v=vs.85).aspx)
-    /// on Windows.
-    fn duplicate(&self) -> Result<File>;
+pub trait FileExt { 
 
     /// Returns the amount of physical space allocated for a file.
     fn allocated_size(&self) -> Result<u64>;
@@ -78,9 +63,6 @@ pub trait FileExt {
 }
 
 impl FileExt for File {
-    fn duplicate(&self) -> Result<File> {
-        sys::duplicate(self)
-    }
     fn allocated_size(&self) -> Result<u64> {
         sys::allocated_size(self)
     }
@@ -112,33 +94,7 @@ mod test {
 
     use std::fs;
     use super::*;
-    use std::io::{Read, Seek, SeekFrom, Write};
     use crate::{allocation_granularity, available_space, free_space, lock_contended_error, total_space};
-
-    /// Tests file duplication.
-    #[test]
-    fn duplicate() {
-        let tempdir = tempdir::TempDir::new("fs4").unwrap();
-        let path = tempdir.path().join("fs4");
-        let mut file1 =
-            fs::OpenOptions::new().read(true).write(true).create(true).open(&path).unwrap();
-        let mut file2 = file1.duplicate().unwrap();
-
-        // Write into the first file and then drop it.
-        file1.write_all(b"foo").unwrap();
-        drop(file1);
-
-        let mut buf = vec![];
-
-        // Read from the second file; since the position is shared it will already be at EOF.
-        file2.read_to_end(&mut buf).unwrap();
-        assert_eq!(0, buf.len());
-
-        // Rewind and read.
-        file2.seek(SeekFrom::Start(0)).unwrap();
-        file2.read_to_end(&mut buf).unwrap();
-        assert_eq!(&buf, &b"foo");
-    }
 
     /// Tests shared file lock operations.
     #[test]
@@ -313,17 +269,7 @@ mod test {
         b.iter(|| {
             file.allocated_size().unwrap();
         });
-    }
-
-    /// Benchmarks duplicating a file descriptor or handle.
-    #[bench]
-    fn bench_duplicate(b: &mut test::Bencher) {
-        let tempdir = tempdir::TempDir::new("fs4").unwrap();
-        let path = tempdir.path().join("fs4");
-        let file = fs::OpenOptions::new().read(true).write(true).create(true).open(&path).unwrap();
-
-        b.iter(|| test::black_box(file.duplicate().unwrap()));
-    }
+    } 
 
     /// Benchmarks locking and unlocking a file lock.
     #[bench]

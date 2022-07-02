@@ -13,34 +13,7 @@ mod test {
     extern crate test;
 
     use async_std::fs;
-    use async_std::prelude::*;
-    use async_std::io::{SeekFrom, WriteExt, ReadExt};
-    use crate::{allocation_granularity, available_space, async_std::AsyncFileExt, free_space, lock_contended_error, total_space};
-
-    /// Tests file duplication.
-    #[async_std::test]
-    async fn duplicate() {
-        let tempdir = tempdir::TempDir::new("fs4").unwrap();
-        let path = tempdir.path().join("fs4");
-        let mut file1 =
-            fs::OpenOptions::new().read(true).write(true).create(true).open(&path).await.unwrap();
-        let mut file2 = file1.duplicate().unwrap();
-
-        // Write into the first file and then drop it.
-        file1.write_all(b"foo").await.unwrap();
-        drop(file1);
-
-        let mut buf = vec![];
-
-        // Read from the second file; since the position is shared it will already be at EOF.
-        file2.read_to_end(&mut buf).await.unwrap();
-        assert_eq!(0, buf.len());
-
-        // Rewind and read.
-        file2.seek(SeekFrom::Start(0)).await.unwrap();
-        file2.read_to_end(&mut buf).await.unwrap();
-        assert_eq!(&buf, &b"foo");
-    }
+    use crate::{allocation_granularity, available_space, async_std::AsyncFileExt, free_space, lock_contended_error, total_space}; 
 
     /// Tests shared file lock operations.
     #[async_std::test]

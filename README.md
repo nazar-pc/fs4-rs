@@ -5,7 +5,7 @@
 
 Extended utilities for working with files and filesystems in Rust.
 
-This is a fork of the [fs2-rs](https://github.com/danburkert/fs2-rs) crate, the aim for this fork is to support `async`.
+This is a fork of the [fs2-rs](https://github.com/danburkert/fs2-rs) crate, the aim for this fork is to support `async` and replace `libc` by `rustix`.
 
 [<img alt="github" src="https://img.shields.io/badge/GITHUB-fs4-8da0cb?style=for-the-badge&logo=Github" height="22">][Github-url]
 [<img alt="Build" src="https://img.shields.io/github/workflow/status/al8n/fs4-rs/CI/master?logo=Github-Actions&style=for-the-badge" height="22">][CI-url]
@@ -24,30 +24,29 @@ This is a fork of the [fs2-rs](https://github.com/danburkert/fs2-rs) crate, the 
 - std 
     ```toml
     [dependencies]
-    fs4 = { version = "0.5", features = ["sync"] }
+    fs4 = { version = "0.6", features = ["sync"] }
     ```
   
 - [tokio runtime](https://crates.io/crates/tokio)
     ```toml
     [dependencies]
-    fs4 = { version = "0.5", features = ["tokio-async"] }
+    fs4 = { version = "0.6", features = ["tokio-async"] }
     ```
 
 - [async-std runtime](https://crates.io/crates/async-std)
     ```toml
     [dependencies]
-    fs4 = { version = "0.5", features = ["std-async"] }
+    fs4 = { version = "0.6", features = ["std-async"] }
     ```
 
 - [smol runtime](https://crates.io/crates/smol)
     ```toml
     [dependencies]
-    fs4 = { version = "0.5", features = ["smol-async"] }
+    fs4 = { version = "0.6", features = ["smol-async"] }
     ```
 
 ## Features
 
-- [x] file descriptor duplication.
 - [x] file locks.
 - [x] file (pre)allocation.
 - [x] file allocation information.

@@ -1,10 +1,8 @@
 //! Extended utilities for working with files and filesystems in Rust.
-#![doc(html_root_url = "https://docs.rs/fs4/0.5.5")]
+#![doc(html_root_url = "https://docs.rs/fs4/0.6.0")]
 #![cfg_attr(test, feature(test))]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![cfg_attr(docsrs, allow(unused_attributes))]
-#[cfg(unix)]
-extern crate libc;
 
 #[cfg(windows)]
 extern crate winapi;

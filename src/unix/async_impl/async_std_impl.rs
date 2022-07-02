@@ -1,8 +1,7 @@
 use std::os::unix::fs::MetadataExt;
-use std::os::unix::io::{AsRawFd, FromRawFd};
+use std::os::unix::io::AsRawFd;
 use async_std::fs::File;
 
-duplicate!(File);
 lock_impl!(File);
 allocate!(File);
 allocate_size!(File);
@@ -10,38 +9,10 @@ allocate_size!(File);
 #[cfg(test)]
 mod test {
     extern crate tempdir;
-    extern crate libc;
 
-    use async_std::fs::{self, File};
-    use std::os::unix::io::AsRawFd;
+    use async_std::fs;
 
     use crate::{lock_contended_error, async_std::AsyncFileExt};
-
-    /// The duplicate method returns a file with a new file descriptor.
-    #[async_std::test]
-    async fn duplicate_new_fd() {
-        let tempdir = tempdir::TempDir::new("fs4").unwrap();
-        let path = tempdir.path().join("fs4");
-        let file1 = fs::OpenOptions::new().write(true).create(true).open(&path).await.unwrap();
-        let file2 = file1.duplicate().unwrap();
-        assert_ne!(file1.as_raw_fd(), file2.as_raw_fd());
-    }
-
-    /// The duplicate method should preservesthe close on exec flag.
-    #[async_std::test]
-    async fn duplicate_cloexec() {
-
-        fn flags(file: &File) -> libc::c_int {
-            unsafe { libc::fcntl(file.as_raw_fd(), libc::F_GETFL, 0) }
-        }
-
-        let tempdir = tempdir::TempDir::new("fs4").unwrap();
-        let path = tempdir.path().join("fs4");
-        let file1 = fs::OpenOptions::new().write(true).create(true).open(&path).await.unwrap();
-        let file2 = file1.duplicate().unwrap();
-
-        assert_eq!(flags(&file1), flags(&file2));
-    }
 
     /// Tests that locking a file descriptor will replace any existing locks
     /// held on the file descriptor.
@@ -62,25 +33,5 @@ mod test {
         assert_eq!(file2.try_lock_exclusive().unwrap_err().raw_os_error(),
                    lock_contended_error().raw_os_error());
         file1.lock_shared().unwrap();
-    }
-
-    /// Tests that locks are shared among duplicated file descriptors.
-    #[async_std::test]
-    async fn lock_duplicate() {
-        let tempdir = tempdir::TempDir::new("fs4").unwrap();
-        let path = tempdir.path().join("fs4");
-        let file1 = fs::OpenOptions::new().write(true).create(true).open(&path).await.unwrap();
-        let file2 = file1.duplicate().unwrap();
-        let file3 = fs::OpenOptions::new().write(true).create(true).open(&path).await.unwrap();
-
-        // Create a lock through fd1, then replace it through fd2.
-        file1.lock_shared().unwrap();
-        file2.lock_exclusive().unwrap();
-        assert_eq!(file3.try_lock_shared().unwrap_err().raw_os_error(),
-                   lock_contended_error().raw_os_error());
-
-        // Either of the file descriptors should be able to unlock.
-        file1.unlock().unwrap();
-        file3.lock_shared().unwrap();
     }
 }

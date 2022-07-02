@@ -8,11 +8,16 @@ macro_rules! allocate {
             target_os = "nacl"
         ))]
         pub async fn allocate(file: &$file, len: u64) -> std::io::Result<()> {
-            let ret = unsafe { libc::fallocate(file.as_raw_fd(), 0, 0, len as libc::off_t) };
-            if ret == 0 {
-                Ok(())
-            } else {
-                Err(std::io::Error::last_os_error())
+            use rustix::{
+                fd::BorrowedFd,
+                fs::{fallocate, FallocateFlags},
+            };
+            unsafe {
+                let borrowed_fd = BorrowedFd::borrow_raw(file.as_raw_fd());
+                match fallocate(borrowed_fd, FallocateFlags::from_bits_unchecked(0), 0, len) {
+                    Ok(_) => Ok(()),
+                    Err(e) => Err(std::io::Error::from_raw_os_error(e.raw_os_error())),
+                }
             }
         }
 
