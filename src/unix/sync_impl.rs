@@ -9,14 +9,20 @@ pub fn allocated_size(file: &File) -> std::io::Result<u64> {
     file.metadata().map(|m| m.blocks() as u64 * 512)
 }
 
-#[cfg(any(target_os = "linux",
-target_os = "freebsd",
-target_os = "android",
-target_os = "emscripten",
-target_os = "nacl"))]
+#[cfg(any(
+    target_os = "linux",
+    target_os = "freebsd",
+    target_os = "android",
+    target_os = "emscripten",
+    target_os = "nacl"
+))]
 pub fn allocate(file: &File, len: u64) -> std::io::Result<()> {
     let ret = unsafe { libc::fallocate(file.as_raw_fd(), 0, 0, len as libc::off_t) };
-    if ret == 0 { Ok(()) } else { Err(std::io::Error::last_os_error()) }
+    if ret == 0 {
+        Ok(())
+    } else {
+        Err(std::io::Error::last_os_error())
+    }
 }
 
 #[cfg(any(target_os = "macos", target_os = "ios"))]
@@ -50,11 +56,13 @@ pub fn allocate(file: &File, len: u64) -> std::io::Result<()> {
     }
 }
 
-#[cfg(any(target_os = "openbsd",
-target_os = "netbsd",
-target_os = "dragonfly",
-target_os = "solaris",
-target_os = "haiku"))]
+#[cfg(any(
+    target_os = "openbsd",
+    target_os = "netbsd",
+    target_os = "dragonfly",
+    target_os = "solaris",
+    target_os = "haiku",
+))]
 pub fn allocate(file: &File, len: u64) -> std::io::Result<()> {
     // No file allocation API available, just set the length if necessary.
     if len > file.metadata()?.len() as u64 {
@@ -66,20 +74,36 @@ pub fn allocate(file: &File, len: u64) -> std::io::Result<()> {
 
 #[cfg(test)]
 mod test {
-    extern crate tempdir;
     extern crate libc;
+    extern crate tempdir;
 
     use std::fs::{self, File};
     use std::os::unix::io::AsRawFd;
+    // use rustix::fs;
 
     use crate::{lock_contended_error, FileExt};
-    
+
+    #[test]
+    fn test_() {
+        let tempdir = tempdir::TempDir::new("fs4").unwrap();
+        let path = tempdir.path().join("fs4");
+        let file1 = fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .open(&path)
+            .unwrap();
+    }
+
     /// The duplicate method returns a file with a new file descriptor.
     #[test]
     fn duplicate_new_fd() {
         let tempdir = tempdir::TempDir::new("fs4").unwrap();
         let path = tempdir.path().join("fs4");
-        let file1 = fs::OpenOptions::new().write(true).create(true).open(&path).unwrap();
+        let file1 = fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .open(&path)
+            .unwrap();
         let file2 = file1.duplicate().unwrap();
         assert_ne!(file1.as_raw_fd(), file2.as_raw_fd());
     }
@@ -87,14 +111,17 @@ mod test {
     /// The duplicate method should preservesthe close on exec flag.
     #[test]
     fn duplicate_cloexec() {
-
         fn flags(file: &File) -> libc::c_int {
             unsafe { libc::fcntl(file.as_raw_fd(), libc::F_GETFL, 0) }
         }
 
         let tempdir = tempdir::TempDir::new("fs4").unwrap();
         let path = tempdir.path().join("fs4");
-        let file1 = fs::OpenOptions::new().write(true).create(true).open(&path).unwrap();
+        let file1 = fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .open(&path)
+            .unwrap();
         let file2 = file1.duplicate().unwrap();
 
         assert_eq!(flags(&file1), flags(&file2));
@@ -106,8 +133,16 @@ mod test {
     fn lock_replace() {
         let tempdir = tempdir::TempDir::new("fs4").unwrap();
         let path = tempdir.path().join("fs4");
-        let file1 = fs::OpenOptions::new().write(true).create(true).open(&path).unwrap();
-        let file2 = fs::OpenOptions::new().write(true).create(true).open(&path).unwrap();
+        let file1 = fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .open(&path)
+            .unwrap();
+        let file2 = fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .open(&path)
+            .unwrap();
 
         // Creating a shared lock will drop an exclusive lock.
         file1.lock_exclusive().unwrap();
@@ -116,8 +151,10 @@ mod test {
 
         // Attempting to replace a shared lock with an exclusive lock will fail
         // with multiple lock holders, and remove the original shared lock.
-        assert_eq!(file2.try_lock_exclusive().unwrap_err().raw_os_error(),
-                   lock_contended_error().raw_os_error());
+        assert_eq!(
+            file2.try_lock_exclusive().unwrap_err().raw_os_error(),
+            lock_contended_error().raw_os_error()
+        );
         file1.lock_shared().unwrap();
     }
 
@@ -126,15 +163,25 @@ mod test {
     fn lock_duplicate() {
         let tempdir = tempdir::TempDir::new("fs4").unwrap();
         let path = tempdir.path().join("fs4");
-        let file1 = fs::OpenOptions::new().write(true).create(true).open(&path).unwrap();
+        let file1 = fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .open(&path)
+            .unwrap();
         let file2 = file1.duplicate().unwrap();
-        let file3 = fs::OpenOptions::new().write(true).create(true).open(&path).unwrap();
+        let file3 = fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .open(&path)
+            .unwrap();
 
         // Create a lock through fd1, then replace it through fd2.
         file1.lock_shared().unwrap();
         file2.lock_exclusive().unwrap();
-        assert_eq!(file3.try_lock_shared().unwrap_err().raw_os_error(),
-                   lock_contended_error().raw_os_error());
+        assert_eq!(
+            file3.try_lock_shared().unwrap_err().raw_os_error(),
+            lock_contended_error().raw_os_error()
+        );
 
         // Either of the file descriptors should be able to unlock.
         file1.unlock().unwrap();

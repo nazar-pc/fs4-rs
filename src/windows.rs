@@ -4,13 +4,15 @@ macro_rules! duplicate {
             unsafe {
                 let mut handle = ptr::null_mut();
                 let current_process = GetCurrentProcess();
-                let ret = DuplicateHandle(current_process,
-                                          file.as_raw_handle(),
-                                          current_process,
-                                          &mut handle,
-                                          0,
-                                          true as BOOL,
-                                          DUPLICATE_SAME_ACCESS);
+                let ret = DuplicateHandle(
+                    current_process,
+                    file.as_raw_handle(),
+                    current_process,
+                    &mut handle,
+                    0,
+                    true as BOOL,
+                    DUPLICATE_SAME_ACCESS,
+                );
                 if ret == 0 {
                     Err(Error::last_os_error())
                 } else {
@@ -42,7 +44,11 @@ macro_rules! lock_impl {
         pub fn unlock(file: &$file) -> Result<()> {
             unsafe {
                 let ret = UnlockFile(file.as_raw_handle(), 0, 0, !0, !0);
-                if ret == 0 { Err(Error::last_os_error()) } else { Ok(()) }
+                if ret == 0 {
+                    Err(Error::last_os_error())
+                } else {
+                    Ok(())
+                }
             }
         }
 
@@ -50,25 +56,29 @@ macro_rules! lock_impl {
             unsafe {
                 let mut overlapped = mem::zeroed();
                 let ret = LockFileEx(file.as_raw_handle(), flags, 0, !0, !0, &mut overlapped);
-                if ret == 0 { Err(Error::last_os_error()) } else { Ok(()) }
+                if ret == 0 {
+                    Err(Error::last_os_error())
+                } else {
+                    Ok(())
+                }
             }
         }
     };
 }
 
-#[cfg(feature = "sync")]
-pub(crate) mod sync_impl;
 #[cfg(any(feature = "smol-async", feature = "std-async", feature = "tokio-async"))]
 pub(crate) mod async_impl;
+#[cfg(feature = "sync")]
+pub(crate) mod sync_impl;
 
+use crate::FsStats;
 use std::io::{Error, Result};
 use std::os::windows::ffi::OsStrExt;
 use std::path::Path;
-use winapi::shared::winerror::ERROR_LOCK_VIOLATION;
 use winapi::shared::minwindef::DWORD;
+use winapi::shared::winerror::ERROR_LOCK_VIOLATION;
 use winapi::um::fileapi::GetDiskFreeSpaceW;
 use winapi::um::fileapi::GetVolumePathNameW;
-use crate::FsStats;
 
 pub fn lock_error() -> Error {
     Error::from_raw_os_error(ERROR_LOCK_VIOLATION as i32)
@@ -77,10 +87,15 @@ pub fn lock_error() -> Error {
 fn volume_path(path: &Path, volume_path: &mut [u16]) -> Result<()> {
     let path_utf8: Vec<u16> = path.as_os_str().encode_wide().chain(Some(0)).collect();
     unsafe {
-        let ret = GetVolumePathNameW(path_utf8.as_ptr(),
-                                     volume_path.as_mut_ptr(),
-                                     volume_path.len() as DWORD);
-        if ret == 0 { Err(Error::last_os_error()) } else { Ok(())
+        let ret = GetVolumePathNameW(
+            path_utf8.as_ptr(),
+            volume_path.as_mut_ptr(),
+            volume_path.len() as DWORD,
+        );
+        if ret == 0 {
+            Err(Error::last_os_error())
+        } else {
+            Ok(())
         }
     }
 }
@@ -89,16 +104,17 @@ pub fn statvfs(path: &Path) -> Result<FsStats> {
     let root_path: &mut [u16] = &mut [0; 261];
     volume_path(path, root_path)?;
     unsafe {
-
         let mut sectors_per_cluster = 0;
         let mut bytes_per_sector = 0;
         let mut number_of_free_clusters = 0;
         let mut total_number_of_clusters = 0;
-        let ret = GetDiskFreeSpaceW(root_path.as_ptr(),
-                                    &mut sectors_per_cluster,
-                                    &mut bytes_per_sector,
-                                    &mut number_of_free_clusters,
-                                    &mut total_number_of_clusters);
+        let ret = GetDiskFreeSpaceW(
+            root_path.as_ptr(),
+            &mut sectors_per_cluster,
+            &mut bytes_per_sector,
+            &mut number_of_free_clusters,
+            &mut total_number_of_clusters,
+        );
         if ret == 0 {
             Err(Error::last_os_error())
         } else {

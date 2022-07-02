@@ -8,7 +8,8 @@ macro_rules! allocate_size {
                     file.as_raw_handle(),
                     FileStandardInfo,
                     &mut info as *mut _ as *mut _,
-                    mem::size_of::<FILE_STANDARD_INFO>() as DWORD);
+                    mem::size_of::<FILE_STANDARD_INFO>() as DWORD,
+                );
 
                 if ret == 0 {
                     Err(Error::last_os_error())
@@ -31,7 +32,8 @@ macro_rules! allocate {
                         file.as_raw_handle(),
                         FileAllocationInfo,
                         &mut info as *mut _ as *mut _,
-                        mem::size_of::<FILE_ALLOCATION_INFO>() as DWORD);
+                        mem::size_of::<FILE_ALLOCATION_INFO>() as DWORD,
+                    );
                     if ret == 0 {
                         return Err(Error::last_os_error());
                     }

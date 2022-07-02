@@ -1,13 +1,19 @@
 macro_rules! allocate {
     ($file: ty) => {
-        #[cfg(any(target_os = "linux",
-        target_os = "freebsd",
-        target_os = "android",
-        target_os = "emscripten",
-        target_os = "nacl"))]
+        #[cfg(any(
+            target_os = "linux",
+            target_os = "freebsd",
+            target_os = "android",
+            target_os = "emscripten",
+            target_os = "nacl"
+        ))]
         pub async fn allocate(file: &$file, len: u64) -> std::io::Result<()> {
             let ret = unsafe { libc::fallocate(file.as_raw_fd(), 0, 0, len as libc::off_t) };
-            if ret == 0 { Ok(()) } else { Err(std::io::Error::last_os_error()) }
+            if ret == 0 {
+                Ok(())
+            } else {
+                Err(std::io::Error::last_os_error())
+            }
         }
 
         #[cfg(any(target_os = "macos", target_os = "ios"))]
@@ -27,7 +33,8 @@ macro_rules! allocate {
                 if ret == -1 {
                     // Unable to allocate contiguous disk space; attempt to allocate non-contiguously.
                     fstore.fst_flags = libc::F_ALLOCATEALL;
-                    let ret = unsafe { libc::fcntl(file.as_raw_fd(), libc::F_PREALLOCATE, &fstore) };
+                    let ret =
+                        unsafe { libc::fcntl(file.as_raw_fd(), libc::F_PREALLOCATE, &fstore) };
                     if ret == -1 {
                         return Err(std::io::Error::last_os_error());
                     }
@@ -41,11 +48,13 @@ macro_rules! allocate {
             }
         }
 
-        #[cfg(any(target_os = "openbsd",
-        target_os = "netbsd",
-        target_os = "dragonfly",
-        target_os = "solaris",
-        target_os = "haiku"))]
+        #[cfg(any(
+            target_os = "openbsd",
+            target_os = "netbsd",
+            target_os = "dragonfly",
+            target_os = "solaris",
+            target_os = "haiku"
+        ))]
         pub async fn allocate(file: &$file, len: u64) -> std::io::Result<()> {
             // No file allocation API available, just set the length if necessary.
             if len > file.metadata().await?.len() as u64 {
@@ -76,12 +85,3 @@ cfg_smol! {
 cfg_tokio! {
     pub(crate) mod tokio_impl;
 }
-
-
-
-
-
-
-
-
-

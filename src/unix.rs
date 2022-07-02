@@ -36,7 +36,6 @@ macro_rules! lock_impl {
             flock(file, libc::LOCK_UN)
         }
 
-
         /// Simulate flock() using fcntl(); primarily for Oracle Solaris.
         #[cfg(target_os = "solaris")]
         fn flock(file: &$file, flag: libc::c_int) -> std::io::Result<()> {
@@ -69,31 +68,35 @@ macro_rules! lock_impl {
                 // Translate EACCES to EWOULDBLOCK
                 -1 => match std::io::Error::last_os_error().raw_os_error() {
                     Some(libc::EACCES) => return Err(lock_error()),
-                    _ => return Err(std::io::Error::last_os_error())
+                    _ => return Err(std::io::Error::last_os_error()),
                 },
-                _ => Ok(())
+                _ => Ok(()),
             }
         }
 
         #[cfg(not(target_os = "solaris"))]
         fn flock(file: &$file, flag: libc::c_int) -> std::io::Result<()> {
             let ret = unsafe { libc::flock(file.as_raw_fd(), flag) };
-            if ret < 0 { Err(std::io::Error::last_os_error()) } else { Ok(()) }
+            if ret < 0 {
+                Err(std::io::Error::last_os_error())
+            } else {
+                Ok(())
+            }
         }
     };
 }
 
-#[cfg(feature = "sync")]
-pub(crate) mod sync_impl;
 #[cfg(any(feature = "smol-async", feature = "std-async", feature = "tokio-async"))]
 pub(crate) mod async_impl;
+#[cfg(feature = "sync")]
+pub(crate) mod sync_impl;
 
+use crate::FsStats;
 use std::ffi::CString;
-use std::mem;
 use std::io::{Error, ErrorKind, Result};
+use std::mem;
 use std::os::unix::ffi::OsStrExt;
 use std::path::Path;
-use crate::FsStats;
 
 pub fn lock_error() -> Error {
     Error::from_raw_os_error(libc::EWOULDBLOCK)
@@ -120,4 +123,3 @@ pub fn statvfs(path: &Path) -> Result<FsStats> {
         }
     }
 }
-
