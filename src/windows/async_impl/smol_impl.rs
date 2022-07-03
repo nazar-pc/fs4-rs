@@ -1,5 +1,6 @@
 use std::io::{Error, Result};
 use std::mem;
+use std::os::windows::io::AsRawHandle;
 
 use winapi::shared::minwindef::DWORD;
 use winapi::um::fileapi::{FILE_ALLOCATION_INFO, FILE_STANDARD_INFO};
@@ -19,7 +20,6 @@ mod test {
     extern crate tempdir;
 
     use smol::fs;
-    use std::os::windows::io::AsRawHandle;
 
     use crate::{lock_contended_error, smol::AsyncFileExt}; 
 
