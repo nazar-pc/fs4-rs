@@ -1,12 +1,12 @@
 [package]
 name = "fs4"
 # NB: When modifying, also modify html_root_url in lib.rs
-version = "0.6.0"
+version = "0.6.1"
 authors = ["Dan Burkert <dan@danburkert.com>", "Al Liu <scygliu1@gmail.com>"]
 license = "MIT/Apache-2.0"
 repository = "https://github.com/al8n/fs4-rs"
 documentation = "https://docs.rs/fs4"
-description = "No libc, pure Rust cross-platform file locks and file duplication. Original fs2, now supports async and replace libc by rustix."
+description = "No libc, pure Rust cross-platform file locks. Original fs2, now supports async and replace libc by rustix."
 keywords = ["file", "fs2", "lock", "duplicate", "flock"]
 categories = ["filesystem", "external-ffi-bindings", "asynchronous"]
 edition = "2021"
