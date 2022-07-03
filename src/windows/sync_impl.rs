@@ -1,7 +1,6 @@
 use std::fs::File;
 use std::io::{Error, Result};
 use std::mem;
-use std::os::windows::io::AsRawHandle;
 
 use winapi::shared::minwindef::DWORD;
 use winapi::um::fileapi::{LockFileEx, SetFileInformationByHandle, UnlockFile};
