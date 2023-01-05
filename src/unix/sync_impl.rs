@@ -24,7 +24,7 @@ pub fn allocate(file: &File, len: u64) -> std::io::Result<()> {
         let borrowed_fd = BorrowedFd::borrow_raw(file.as_raw_fd());
         match fallocate(borrowed_fd, FallocateFlags::from_bits_unchecked(0), 0, len) {
             Ok(_) => Ok(()),
-            Err(_) => Err(std::io::Error::last_os_error()),
+            Err(e) => Err(std::io::Error::from_raw_os_error(e.raw_os_error())),
         }
     }
 }
