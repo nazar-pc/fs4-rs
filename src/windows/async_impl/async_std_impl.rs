@@ -2,12 +2,12 @@ use std::io::{Error, Result};
 use std::mem;
 use std::os::windows::io::AsRawHandle;
 
-use winapi::shared::minwindef::DWORD;
-use winapi::um::fileapi::{FILE_ALLOCATION_INFO, FILE_STANDARD_INFO};
-use winapi::um::fileapi::{LockFileEx, UnlockFile, SetFileInformationByHandle};
-use winapi::um::minwinbase::{FileAllocationInfo, FileStandardInfo};
-use winapi::um::minwinbase::{LOCKFILE_FAIL_IMMEDIATELY, LOCKFILE_EXCLUSIVE_LOCK};
-use winapi::um::winbase::GetFileInformationByHandleEx;
+use windows_sys::Win32::Foundation::HANDLE;
+use windows_sys::Win32::Storage::FileSystem::{
+    FileAllocationInfo, FileStandardInfo, GetFileInformationByHandleEx,
+    SetFileInformationByHandle, UnlockFile, FILE_ALLOCATION_INFO,
+    FILE_STANDARD_INFO, LOCKFILE_EXCLUSIVE_LOCK, LOCKFILE_FAIL_IMMEDIATELY, LockFileEx,
+};
 
 use async_std::fs::File;
 

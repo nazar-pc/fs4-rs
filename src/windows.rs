@@ -18,7 +18,7 @@ macro_rules! lock_impl {
 
         pub fn unlock(file: &$file) -> Result<()> {
             unsafe {
-                let ret = UnlockFile(file.as_raw_handle(), 0, 0, !0, !0);
+                let ret = UnlockFile(file.as_raw_handle() as HANDLE, 0, 0, !0, !0);
                 if ret == 0 {
                     Err(Error::last_os_error())
                 } else {
@@ -27,10 +27,17 @@ macro_rules! lock_impl {
             }
         }
 
-        fn lock_file(file: &$file, flags: DWORD) -> Result<()> {
+        fn lock_file(file: &$file, flags: u32) -> Result<()> {
             unsafe {
                 let mut overlapped = mem::zeroed();
-                let ret = LockFileEx(file.as_raw_handle(), flags, 0, !0, !0, &mut overlapped);
+                let ret = LockFileEx(
+                    file.as_raw_handle() as HANDLE,
+                    flags,
+                    0,
+                    !0,
+                    !0,
+                    &mut overlapped,
+                );
                 if ret == 0 {
                     Err(Error::last_os_error())
                 } else {
@@ -50,10 +57,8 @@ use crate::FsStats;
 use std::io::{Error, Result};
 use std::os::windows::ffi::OsStrExt;
 use std::path::Path;
-use winapi::shared::minwindef::DWORD;
-use winapi::shared::winerror::ERROR_LOCK_VIOLATION;
-use winapi::um::fileapi::GetDiskFreeSpaceW;
-use winapi::um::fileapi::GetVolumePathNameW;
+use windows_sys::Win32::Foundation::ERROR_LOCK_VIOLATION;
+use windows_sys::Win32::Storage::FileSystem::{GetDiskFreeSpaceW, GetVolumePathNameW};
 
 pub fn lock_error() -> Error {
     Error::from_raw_os_error(ERROR_LOCK_VIOLATION as i32)
@@ -65,7 +70,7 @@ fn volume_path(path: &Path, volume_path: &mut [u16]) -> Result<()> {
         let ret = GetVolumePathNameW(
             path_utf8.as_ptr(),
             volume_path.as_mut_ptr(),
-            volume_path.len() as DWORD,
+            volume_path.len() as u32,
         );
         if ret == 0 {
             Err(Error::last_os_error())
