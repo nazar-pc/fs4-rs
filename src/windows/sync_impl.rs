@@ -3,12 +3,12 @@ use std::io::{Error, Result};
 use std::mem;
 use std::os::windows::io::AsRawHandle;
 
-use winapi::shared::minwindef::DWORD;
-use winapi::um::fileapi::{LockFileEx, SetFileInformationByHandle, UnlockFile};
-use winapi::um::fileapi::{FILE_ALLOCATION_INFO, FILE_STANDARD_INFO};
-use winapi::um::minwinbase::{FileAllocationInfo, FileStandardInfo};
-use winapi::um::minwinbase::{LOCKFILE_EXCLUSIVE_LOCK, LOCKFILE_FAIL_IMMEDIATELY};
-use winapi::um::winbase::GetFileInformationByHandleEx;
+use windows_sys::Win32::Foundation::HANDLE;
+use windows_sys::Win32::Storage::FileSystem::{
+    FileAllocationInfo, FileStandardInfo, GetFileInformationByHandleEx, LockFileEx,
+    SetFileInformationByHandle, UnlockFile, FILE_ALLOCATION_INFO, FILE_STANDARD_INFO,
+    LOCKFILE_EXCLUSIVE_LOCK, LOCKFILE_FAIL_IMMEDIATELY,
+};
 
 lock_impl!(File);
 
@@ -17,16 +17,16 @@ pub fn allocated_size(file: &File) -> Result<u64> {
         let mut info: FILE_STANDARD_INFO = mem::zeroed();
 
         let ret = GetFileInformationByHandleEx(
-            file.as_raw_handle(),
+            file.as_raw_handle() as HANDLE,
             FileStandardInfo,
             &mut info as *mut _ as *mut _,
-            mem::size_of::<FILE_STANDARD_INFO>() as DWORD,
+            mem::size_of::<FILE_STANDARD_INFO>() as u32,
         );
 
         if ret == 0 {
             Err(Error::last_os_error())
         } else {
-            Ok(*info.AllocationSize.QuadPart() as u64)
+            Ok(info.AllocationSize as u64)
         }
     }
 }
@@ -35,12 +35,12 @@ pub fn allocate(file: &File, len: u64) -> Result<()> {
     if allocated_size(file)? < len {
         unsafe {
             let mut info: FILE_ALLOCATION_INFO = mem::zeroed();
-            *info.AllocationSize.QuadPart_mut() = len as i64;
+            info.AllocationSize = len as i64;
             let ret = SetFileInformationByHandle(
-                file.as_raw_handle(),
+                file.as_raw_handle() as HANDLE,
                 FileAllocationInfo,
                 &mut info as *mut _ as *mut _,
-                mem::size_of::<FILE_ALLOCATION_INFO>() as DWORD,
+                mem::size_of::<FILE_ALLOCATION_INFO>() as u32,
             );
             if ret == 0 {
                 return Err(Error::last_os_error());

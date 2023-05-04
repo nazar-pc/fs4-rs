@@ -5,7 +5,7 @@
 #![cfg_attr(docsrs, allow(unused_attributes))]
 
 #[cfg(windows)]
-extern crate winapi;
+extern crate windows_sys;
 
 macro_rules! cfg_async_std {
     ($($item:item)*) => {
