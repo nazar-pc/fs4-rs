@@ -22,7 +22,7 @@ smol-async = ["smol", "async-trait"]
 libc = "0.2"
 
 [target.'cfg(not(windows))'.dependencies]
-rustix = { version = "0.35.7", features = ["fs"] }
+rustix = { version = "0.37.10", features = ["fs"] }
 
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3", features = ["handleapi", "processthreadsapi", "winerror", "fileapi", "winbase", "std"] }
