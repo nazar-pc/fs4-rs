@@ -13,7 +13,11 @@ pub fn allocated_size(file: &File) -> std::io::Result<u64> {
     target_os = "freebsd",
     target_os = "android",
     target_os = "emscripten",
-    target_os = "nacl"
+    target_os = "nacl",
+    target_os = "macos",
+    target_os = "ios",
+    target_os = "watchos",
+    target_os = "tvos"
 ))]
 pub fn allocate(file: &File, len: u64) -> std::io::Result<()> {
     use rustix::{
@@ -26,37 +30,6 @@ pub fn allocate(file: &File, len: u64) -> std::io::Result<()> {
             Ok(_) => Ok(()),
             Err(e) => Err(std::io::Error::from_raw_os_error(e.raw_os_error())),
         }
-    }
-}
-
-#[cfg(any(target_os = "macos", target_os = "ios"))]
-pub fn allocate(file: &File, len: u64) -> std::io::Result<()> {
-    let stat = file.metadata()?;
-
-    if len > stat.blocks() as u64 * 512 {
-        let mut fstore = libc::fstore_t {
-            fst_flags: libc::F_ALLOCATECONTIG,
-            fst_posmode: libc::F_PEOFPOSMODE,
-            fst_offset: 0,
-            fst_length: len as libc::off_t,
-            fst_bytesalloc: 0,
-        };
-
-        let ret = unsafe { libc::fcntl(file.as_raw_fd(), libc::F_PREALLOCATE, &fstore) };
-        if ret == -1 {
-            // Unable to allocate contiguous disk space; attempt to allocate non-contiguously.
-            fstore.fst_flags = libc::F_ALLOCATEALL;
-            let ret = unsafe { libc::fcntl(file.as_raw_fd(), libc::F_PREALLOCATE, &fstore) };
-            if ret == -1 {
-                return Err(std::io::Error::last_os_error());
-            }
-        }
-    }
-
-    if len > stat.size() as u64 {
-        file.set_len(len)
-    } else {
-        Ok(())
     }
 }
 
