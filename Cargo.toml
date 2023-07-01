@@ -19,7 +19,7 @@ tokio-async = ["tokio/fs", "async-trait"]
 smol-async = ["smol", "async-trait"]
 
 [target.'cfg(not(windows))'.dependencies]
-rustix = { version = "0.37.10", features = ["fs"] }
+rustix = { version = "0.38.1", features = ["fs"] }
 
 [target.'cfg(windows)'.dependencies.windows-sys]
 version = "0.48.0"
