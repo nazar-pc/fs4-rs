@@ -78,7 +78,7 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: test all features
-        run: cargo test --features sync,tokio-async,std-async,smol-async
+        run: cargo test --all-features
 
   coverage:
     name: cargo tarpaulin

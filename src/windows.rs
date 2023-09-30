@@ -48,7 +48,7 @@ macro_rules! lock_impl {
     };
 }
 
-#[cfg(any(feature = "smol-async", feature = "std-async", feature = "tokio-async"))]
+#[cfg(any(feature = "smol", feature = "async-std", feature = "tokio"))]
 pub(crate) mod async_impl;
 #[cfg(feature = "sync")]
 pub(crate) mod sync_impl;
