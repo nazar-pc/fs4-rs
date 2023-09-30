@@ -187,9 +187,9 @@ mod test {
     #[test]
     fn filesystem_space() {
         let tempdir = tempdir::TempDir::new("fs4").unwrap();
-        let total_space = total_space(&tempdir.path()).unwrap();
-        let free_space = free_space(&tempdir.path()).unwrap();
-        let available_space = available_space(&tempdir.path()).unwrap();
+        let total_space = total_space(tempdir.path()).unwrap();
+        let free_space = free_space(tempdir.path()).unwrap();
+        let available_space = available_space(tempdir.path()).unwrap();
 
         assert!(total_space > free_space);
         assert!(total_space > available_space);
@@ -262,7 +262,7 @@ mod test {
             .read(true)
             .write(true)
             .create(true)
-            .open(&path)
+            .open(path)
             .unwrap();
         file.allocate(size).unwrap();
 
@@ -276,7 +276,7 @@ mod test {
     fn bench_lock_unlock(b: &mut test::Bencher) {
         let tempdir = tempdir::TempDir::new("fs4").unwrap();
         let path = tempdir.path().join("fs4");
-        let file = fs::OpenOptions::new().read(true).write(true).create(true).open(&path).unwrap();
+        let file = fs::OpenOptions::new().read(true).write(true).create(true).open(path).unwrap();
 
         b.iter(|| {
             file.lock_exclusive().unwrap();
@@ -289,7 +289,7 @@ mod test {
     fn bench_free_space(b: &mut test::Bencher) {
         let tempdir = tempdir::TempDir::new("fs4").unwrap();
         b.iter(|| {
-            test::black_box(free_space(&tempdir.path()).unwrap());
+            test::black_box(free_space(tempdir.path()).unwrap());
         });
     }
 
@@ -298,7 +298,7 @@ mod test {
     fn bench_available_space(b: &mut test::Bencher) {
         let tempdir = tempdir::TempDir::new("fs4").unwrap();
         b.iter(|| {
-            test::black_box(available_space(&tempdir.path()).unwrap());
+            test::black_box(available_space(tempdir.path()).unwrap());
         });
     }
 
@@ -307,7 +307,7 @@ mod test {
     fn bench_total_space(b: &mut test::Bencher) {
         let tempdir = tempdir::TempDir::new("fs4").unwrap();
         b.iter(|| {
-            test::black_box(total_space(&tempdir.path()).unwrap());
+            test::black_box(total_space(tempdir.path()).unwrap());
         });
     }
 }

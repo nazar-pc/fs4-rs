@@ -1,5 +1,5 @@
 //! Extended utilities for working with files and filesystems in Rust.
-#![doc(html_root_url = "https://docs.rs/fs4/0.6.5")]
+#![doc(html_root_url = "https://docs.rs/fs4/0.7.0")]
 #![cfg_attr(test, feature(test))]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![cfg_attr(docsrs, allow(unused_attributes))]
@@ -10,7 +10,7 @@ extern crate windows_sys;
 macro_rules! cfg_async_std {
     ($($item:item)*) => {
         $(
-            #[cfg(feature = "std-async")]
+            #[cfg(feature = "async-std")]
             #[cfg_attr(docsrs, doc(cfg(feature = "async-std")))]
             $item
         )*
@@ -20,7 +20,7 @@ macro_rules! cfg_async_std {
 macro_rules! cfg_smol {
     ($($item:item)*) => {
         $(
-            #[cfg(feature = "smol-async")]
+            #[cfg(feature = "smol")]
             #[cfg_attr(docsrs, doc(cfg(feature = "smol")))]
             $item
         )*
@@ -30,7 +30,7 @@ macro_rules! cfg_smol {
 macro_rules! cfg_tokio {
     ($($item:item)*) => {
         $(
-            #[cfg(feature = "tokio-async")]
+            #[cfg(feature = "tokio")]
             #[cfg_attr(docsrs, doc(cfg(feature = "tokio")))]
             $item
         )*
@@ -50,8 +50,8 @@ macro_rules! cfg_sync {
 macro_rules! cfg_async {
     ($($item:item)*) => {
         $(
-            #[cfg(any(feature = "smol-async", feature = "std-async", feature = "tokio-async"))]
-            #[cfg_attr(docsrs, doc(cfg(any(feature = "smol-async", feature = "std-async", feature = "tokio-async"))))]
+            #[cfg(any(feature = "smol", feature = "async-std", feature = "tokio"))]
+            #[cfg_attr(docsrs, doc(cfg(any(feature = "smol", feature = "async-std", feature = "tokio"))))]
             $item
         )*
     }

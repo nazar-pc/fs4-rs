@@ -37,7 +37,7 @@ macro_rules! lock_impl {
     };
 }
 
-#[cfg(any(feature = "smol-async", feature = "std-async", feature = "tokio-async"))]
+#[cfg(any(feature = "smol", feature = "async-std", feature = "tokio"))]
 pub(crate) mod async_impl;
 #[cfg(feature = "sync")]
 pub(crate) mod sync_impl;
@@ -54,10 +54,10 @@ pub fn lock_error() -> Error {
 pub fn statvfs(path: impl AsRef<Path>) -> Result<FsStats> {
     match rustix::fs::statvfs(path.as_ref()) {
         Ok(stat) => Ok(FsStats {
-            free_space: stat.f_frsize as u64 * stat.f_bfree as u64,
-            available_space: stat.f_frsize as u64 * stat.f_bavail as u64,
-            total_space: stat.f_frsize as u64 * stat.f_blocks as u64,
-            allocation_granularity: stat.f_frsize as u64,
+            free_space: stat.f_frsize * stat.f_bfree,
+            available_space: stat.f_frsize * stat.f_bavail,
+            total_space: stat.f_frsize * stat.f_blocks,
+            allocation_granularity: stat.f_frsize,
         }),
         Err(e) => Err(std::io::Error::from_raw_os_error(e.raw_os_error())),
     }

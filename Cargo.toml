@@ -1,7 +1,7 @@
 [package]
 name = "fs4"
 # NB: When modifying, also modify html_root_url in lib.rs
-version = "0.6.5"
+version = "0.7.0-alpha.1"
 authors = ["Dan Burkert <dan@danburkert.com>", "Al Liu <scygliu1@gmail.com>"]
 license = "MIT/Apache-2.0"
 repository = "https://github.com/al8n/fs4-rs"
@@ -14,12 +14,12 @@ edition = "2021"
 [features]
 default = ["sync"]
 sync = []
-std-async = ["async-std/async-io", "async-trait"]
-tokio-async = ["tokio/fs", "async-trait"]
-smol-async = ["smol", "async-trait"]
+async-std = ["dep:async-std", "async-trait"]
+tokio = ["dep:tokio", "async-trait"]
+smol = ["dep:smol", "async-trait"]
 
 [target.'cfg(not(windows))'.dependencies]
-rustix = { version = "0.37.10", features = ["fs"] }
+rustix = { version = "0.38", features = ["fs"] }
 
 [target.'cfg(windows)'.dependencies.windows-sys]
 version = "0.48.0"
@@ -32,15 +32,15 @@ features = [
 [dependencies]
 async-trait = { version = "0.1", optional = true }
 async-std = { version = "1.12", optional = true }
-smol = { version = "1.2", optional = true }
-tokio = { version = "1.19", optional = true }
+smol = { version = "1.3", optional = true }
+tokio = { version = "1.32", optional = true, default-features = false, features = ["fs"] }
 
 [dev-dependencies]
 async-std = { version = "1.12", features = ["attributes"] }
 smol-potat = "1.1"
 tempdir = "0.3"
 tokio = { version = "1.19", features = ["full"]}
-libc = "0.2.126"
+libc = "0.2"
 
 [package.metadata.docs.rs]
 all-features = true
