@@ -20,6 +20,7 @@ on:
       - 'LICENSE-*'
       - '**.md'
       - '**.txt'
+  workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
@@ -119,7 +120,7 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
-          
+
   docs:
     name: docs
     runs-on: ubuntu-latest
