@@ -2,12 +2,12 @@ use std::fs::File;
 use std::io::{Error, Result};
 use std::mem;
 use std::os::windows::io::AsRawHandle;
+use std::ptr;
 
 use windows_sys::Win32::Foundation::HANDLE;
 use windows_sys::Win32::Storage::FileSystem::{
-    FileAllocationInfo, FileStandardInfo, GetFileInformationByHandleEx, LockFileEx,
-    SetFileInformationByHandle, UnlockFile, FILE_ALLOCATION_INFO, FILE_STANDARD_INFO,
-    LOCKFILE_EXCLUSIVE_LOCK, LOCKFILE_FAIL_IMMEDIATELY,
+    FileStandardInfo, GetFileInformationByHandleEx, LockFileEx, SetEndOfFile, SetFilePointerEx,
+    UnlockFile, FILE_BEGIN, FILE_STANDARD_INFO, LOCKFILE_EXCLUSIVE_LOCK, LOCKFILE_FAIL_IMMEDIATELY,
 };
 
 lock_impl!(File);
@@ -34,15 +34,17 @@ pub fn allocated_size(file: &File) -> Result<u64> {
 pub fn allocate(file: &File, len: u64) -> Result<()> {
     if allocated_size(file)? < len {
         unsafe {
-            let mut info: FILE_ALLOCATION_INFO = mem::zeroed();
-            info.AllocationSize = len as i64;
-            let ret = SetFileInformationByHandle(
+            if SetFilePointerEx(
                 file.as_raw_handle() as HANDLE,
-                FileAllocationInfo,
-                &mut info as *mut _ as *mut _,
-                mem::size_of::<FILE_ALLOCATION_INFO>() as u32,
-            );
-            if ret == 0 {
+                len as i64,
+                ptr::null_mut(),
+                FILE_BEGIN,
+            ) == 0
+            {
+                return Err(Error::last_os_error());
+            }
+
+            if SetEndOfFile(file.as_raw_handle() as HANDLE) == 0 {
                 return Err(Error::last_os_error());
             }
         }

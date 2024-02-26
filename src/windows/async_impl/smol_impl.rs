@@ -1,12 +1,12 @@
 use std::io::{Error, Result};
 use std::mem;
 use std::os::windows::io::AsRawHandle;
+use std::ptr;
 
 use windows_sys::Win32::Foundation::HANDLE;
 use windows_sys::Win32::Storage::FileSystem::{
-    FileAllocationInfo, FileStandardInfo, GetFileInformationByHandleEx,
-    SetFileInformationByHandle, UnlockFile, FILE_ALLOCATION_INFO,
-    FILE_STANDARD_INFO, LOCKFILE_EXCLUSIVE_LOCK, LOCKFILE_FAIL_IMMEDIATELY, LockFileEx
+    FileStandardInfo, GetFileInformationByHandleEx, LockFileEx, SetEndOfFile, SetFilePointerEx,
+    UnlockFile, FILE_BEGIN, FILE_STANDARD_INFO, LOCKFILE_EXCLUSIVE_LOCK, LOCKFILE_FAIL_IMMEDIATELY,
 };
 
 use smol::fs::File;
